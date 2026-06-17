@@ -1,59 +1,52 @@
-let player = {x: 1, y: 1};
-let map = [];
-let lastMoveTime = 0;
+const config = {
+    type: Phaser.AUTO, width: 390, height: 700,
+    physics: { default: 'arcade' },
+    scene: { preload: preload, create: create, update: update }
+};
+const game = new Phaser.Game(config);
+let player, stick;
 
-// 1. 初始化遊戲與讀取地圖
-async function init() {
-    const res = await fetch('map.json');
-    const data = await res.json();
-    map = data.map;
-    draw();
+function preload() {
+    this.load.image('grass', 'grass.png');
+    this.load.spritesheet('hero_walk', 'hero_walk.png', { frameWidth: 64, frameHeight: 64 });
+    this.load.spritesheet('hero_attack', 'hero_attack.png', { frameWidth: 64, frameHeight: 64 });
+    this.load.image('hero_idle', 'hero_idle.png');
 }
 
-// 2. 繪圖函式
-function draw() {
-    const ctx = document.getElementById('gameCanvas').getContext('2d');
-    ctx.clearRect(0, 0, 250, 250);
-    map.forEach((row, r) => {
-        row.forEach((tile, c) => {
-            ctx.fillStyle = tile === 1 ? '#333' : '#eee';
-            ctx.fillRect(c*50, r*50, 48, 48);
-        });
+function create() {
+    this.add.tileSprite(195, 350, 390, 700, 'grass');
+    player = this.physics.add.sprite(195, 350, 'hero_idle');
+
+    // --- 動畫核心在這裡 ---
+    this.anims.create({ key: 'walk', frames: this.anims.generateFrameNumbers('hero_walk', { start: 0, end: 7 }), frameRate: 10, repeat: -1 });
+    this.anims.create({ key: 'attack', frames: this.anims.generateFrameNumbers('hero_attack', { start: 0, end: 7 }), frameRate: 15, repeat: 0 });
+
+    // 搖桿視覺 (圓圈)
+    this.add.circle(100, 600, 50, 0x888888, 0.5);
+    stick = this.add.circle(100, 600, 25, 0xffffff, 0.8);
+    
+    // 攻擊按鈕 (畫一個簡單的圓形按鈕在右下角)
+    const attackBtn = this.add.circle(300, 600, 40, 0xff0000, 0.6);
+    attackBtn.setInteractive().on('pointerdown', () => {
+        player.play('attack', true); // 按下按鈕時播放攻擊動畫
     });
-    ctx.fillStyle = 'red';
-    ctx.fillRect(player.x*50, player.y*50, 48, 48);
+
+    this.input.on('pointermove', (pointer) => {
+        if (pointer.isDown && pointer.x < 200) { // 在左半邊滑動才控制移動
+            stick.setPosition(pointer.x, pointer.y);
+            const dx = pointer.x - 100;
+            const dy = pointer.y - 600;
+            player.setVelocity(dx * 3, dy * 3);
+            player.play('walk', true);
+            player.flipX = dx < 0;
+        }
+    });
+
+    this.input.on('pointerup', () => {
+        stick.setPosition(100, 600);
+        player.setVelocity(0);
+        player.setTexture('hero_idle'); // 停止時變回站立圖
+    });
 }
 
-// 3. 移動邏輯
-function movePlayer(dx, dy) {
-    if (map[player.y + dy] && map[player.y + dy][player.x + dx] === 0) {
-        player.x += dx;
-        player.y += dy;
-        draw();
-    }
-}
-
-// 4. 設定虛擬搖桿
-const manager = nipplejs.create({
-    zone: document.getElementById('zone_joystick'),
-    mode: 'static',
-    position: { left: '50%', top: '50%' },
-    color: 'red'
-});
-
-manager.on('move', (evt, data) => {
-    // 限制移動頻率，避免移動太快
-    const now = Date.now();
-    if (now - lastMoveTime > 150 && data.direction) {
-        let dx = 0, dy = 0;
-        if (data.direction.angle === 'up') dy = -1;
-        if (data.direction.angle === 'down') dy = 1;
-        if (data.direction.angle === 'left') dx = -1;
-        if (data.direction.angle === 'right') dx = 1;
-        
-        movePlayer(dx, dy);
-        lastMoveTime = now;
-    }
-});
-
-init();
+function update() {}
