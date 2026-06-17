@@ -7,7 +7,7 @@ const game = new Phaser.Game(config);
 let player, stick;
 
 function preload() {
-    this.load.image('grass', 'grass.png');
+    this.load.image('grass', 'grass.jpg');
     this.load.spritesheet('hero_walk', 'hero_walk.png', { frameWidth: 64, frameHeight: 64 });
     this.load.spritesheet('hero_attack', 'hero_attack.png', { frameWidth: 64, frameHeight: 64 });
     this.load.image('hero_idle', 'hero_idle.png');
