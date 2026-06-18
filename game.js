@@ -18,22 +18,25 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-let player, manager;
+let player, manager, isCreated = false;
 
 function preload() {
-    // 載入圖片資源
-    this.load.image('grass', 'grass.jpg');
+    // 檔名已更正為 grass.JPG
+    this.load.image('grass', 'grass.JPG');
     this.load.image('hero_idle', 'hero_idle.png');
-    // 載入動畫圖集
     this.load.spritesheet('hero_walk', 'hero_walk.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('hero_attack', 'hero_attack.png', { frameWidth: 32, frameHeight: 32 });
 }
 
 function create() {
-    // 建立平鋪地圖背景
-    const bg = this.add.tileSprite(195, 350, 390, 700, 'grass');
+    // 防止 iOS 重複觸發 create 導致疊影
+    if (isCreated) return;
+    isCreated = true;
+
+    // 建立平鋪背景
+    this.add.tileSprite(195, 350, 390, 700, 'grass');
     
-    // 建立角色並設定物理屬性
+    // 建立角色
     player = this.physics.add.sprite(195, 350, 'hero_idle');
     player.setCollideWorldBounds(true);
 
@@ -43,13 +46,6 @@ function create() {
         frames: this.anims.generateFrameNumbers('hero_walk', { start: 0, end: 7 }),
         frameRate: 10,
         repeat: -1
-    });
-
-    this.anims.create({
-        key: 'attack',
-        frames: this.anims.generateFrameNumbers('hero_attack', { start: 0, end: 7 }),
-        frameRate: 15,
-        repeat: 0
     });
 
     this.anims.create({
@@ -67,14 +63,12 @@ function create() {
         color: 'blue'
     });
 
-    // 搖桿移動事件
     manager.on('move', (evt, data) => {
         player.setVelocity(data.vector.x * 200, data.vector.y * -200);
         player.play('walk', true);
         player.flipX = data.vector.x < 0;
     });
 
-    // 搖桿結束事件 (停止移動並回到閒置狀態)
     manager.on('end', () => {
         player.setVelocity(0);
         player.play('idle', true);
@@ -82,5 +76,5 @@ function create() {
 }
 
 function update() {
-    // 這裡保留為空，確保物理引擎正常運作
+    // 保持空值即可
 }
