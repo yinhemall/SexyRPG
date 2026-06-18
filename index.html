@@ -16,12 +16,16 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            touch-action: none; 
+            touch-action: none; /* 重要：防止行動端捲動與觸控衝突 */
             overflow: hidden;
+            width: 100vw;
+            height: 100vh;
         }
         #gameCanvas { 
             margin-top: 10px; 
             border: 2px solid #555; 
+            /* 建議加上這行，確保 Canvas 在手機上能正確填滿 */
+            touch-action: none; 
         }
         #zone_joystick { 
             width: 150px; 
@@ -29,6 +33,7 @@
             margin-top: 20px; 
             background: #444; 
             border-radius: 50%; 
+            position: relative; /* 確保搖桿定位正確 */
         }
     </style>
 </head>
